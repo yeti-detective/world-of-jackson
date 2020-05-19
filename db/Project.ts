@@ -3,9 +3,10 @@ import {
   IProject,
   IProjectFields
 } from '~/types/db/contentful'
+import { Project } from '~/db'
 
 export interface IProjectFieldsBackrelated extends IProjectFields {
-  parents: Array<IProject>
+  parents?: Array<IProject>
 }
 
 export default new ContentfulObject<IProjectFields>({
@@ -14,8 +15,8 @@ export default new ContentfulObject<IProjectFields>({
 {
   backRelations: [
     {
-      id: 'parents',
-
+      field: 'parentProjects'
+      foreignField: 'projects'
     }
   ]
 })
