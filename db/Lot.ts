@@ -1,15 +1,6 @@
-import { contentful } from '~/db'
-import { prettifyEntry } from '~/db/utils'
+import { ContentfulObject } from '~/db/classes'
+import { ILotFields } from '~/types/db/contentful'
 
-const baseOptions = {
+export default new ContentfulObject<ILotFields>({
   content_type: 'lot'
-}
-
-export const all = async (): Promise<Array<any>> => {
-  const entries = await contentful.getEntries({ ...baseOptions })
-  return entries.items.map(item => prettifyEntry(item))
-}
-
-export default {
-  all
-}
+})

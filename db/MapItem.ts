@@ -5,9 +5,9 @@ import {
 } from '~/db'
 
 export const all = async (): Promise<Array<any>> => [
-  ...(await Zone.all()),
-  ...(await Lot.all()),
-  ...(await Building.all())
+  ...Zone.all(),
+  ...Lot.all(),
+  ...Building.all()
 ]
 
 export default {
