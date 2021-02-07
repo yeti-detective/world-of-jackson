@@ -11,7 +11,7 @@
     "dev": "next -p 3001",
     "dev-remote": "env API_HOST=https://world-of-jackson-git-dev.blacksocialists.now.sh next",
     "build": "next build",
-    "import-xlsx": "ts-node utils/import-xlsx",
+    "import-xlsx": "ts-node --script-mode scripts/import-property-list/ts-node-import-xlsx",
     "start": "next start",
     "storybook": "start-storybook"
   },
