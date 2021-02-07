@@ -1,26 +1,23 @@
-#!/usr/bin/env ts-node-script
-// import XLSX from 'xlsx'
-import IBuildingFields from "types/db/contentful"
+const XLSX = require('xlsx')
+import { IBuildingFields } from "../types/db/contentful"
 
-const XLSX = require("xlsx")
-
-interface IXlsx {
-    read (fileBlob: Buffer): ISpreadSheet 
+type ImportXlsx = {
+    read (fileBlob: Buffer): ImportSpreadSheet 
 }
 
-interface ISpreadSheet {
-    Sheets: {
-        [key: string]: {
-            [key: string]: {
-                v: string
-            }
-        }
+type ImportWorkSheet = {
+    [key: string]: {
+        v: string
     }
 }
 
+type ImportSpreadSheet = {
+    Sheets: ImportWorkSheet
+}
+
 export class XlsxImporter {
-    xlsx: IXlsx
-    spreadSheet: ISpreadSheet
+    xlsx: ImportXlsx
+    spreadSheet: ImportSpreadSheet
     sheets: string[]
     propertyTable: object
     buildings: IBuildingFields[]
@@ -39,23 +36,27 @@ export class XlsxImporter {
         this.sheets = Object.keys(this.spreadSheet.Sheets)
     }
 
-    findContent(): string {
-        for (const sheet of this.sheets) {
-            const addrCol = this.findAddressCol(sheet)
-        }
-        return ''
+    testMethod(filePath: string): string {
+        return filePath
     }
 
-    findAddressCol(sheet: string): string {
-        for (const sheet of sheets) {
+    // findContent(): string {
+    //     for (const sheet of this.sheets) {
+    //         const addrCol = this.findAddressCol(sheet)
+    //     }
+    //     return ''
+    // }
 
-        }
-        return ''
-    }
+    // findAddressCol(sheet: string): string {
+    //     // for (const sheet of sheets) {
 
-    getCol(cell: string): string {
-        const alpha = new RegExp(/[A-Z]/)
-        return cell.match(alpha)?[0]
-    }
+    //     // }
+    //     return ''
+    // }
+
+    // getCol(cell: string): string {
+    //     const alpha: RegExp = new RegExp(/[A-Z]/)
+    //     return cell.match(alpha)?[0]
+    // }
 }
 
