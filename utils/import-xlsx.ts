@@ -19,18 +19,12 @@ type ImportCell = { v: string }
 
 type colRowSheetName = { sheetName: string, col: string, row: string }
 
-type ContentTable = {
-    Address: colRowSheetName,
-
-}
-
 export class XlsxFormatter {
     xlsx: ImportXlsx
     spreadSheet: ImportSpreadSheet
     sheets: string[]
     propertyTable: object
     buildings: IBuildingFields[]
-    contentTable: ContentTable
 
     constructor() {
        this.xlsx = XLSX
