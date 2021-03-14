@@ -1,8 +1,27 @@
 #!/usr/bin/env ts-node-script
 import fs = require("fs");
-import { XlsxFormatter } from "../../utils/import-xlsx"
+import { XlsxFormatter, tableConfig } from "../../utils/import-xlsx"
 
 const filePath: string = process.argv[2];
+const pathToConfig: string = process.argv[3];
+
+let config: tableConfig;
+
+const defaultConfig: tableConfig = {
+    name: "Building Name",
+    lat: "Latitude",
+    long: "Longitude"
+}
+
+try {
+    config = require(pathToConfig);
+} catch(err) {
+    console.warn(`Error getting table config from ${pathToConfig}: `, err);
+}
+if (!config) {
+    config = defaultConfig;
+}
+console.log(`Using this config for table header names: `, JSON.stringify(config, undefined, 2));
 
 if (!filePath) {
     const usageMsg: string = `
@@ -26,7 +45,7 @@ function importXlsxPropertyList(filePath: string) {
     }
     
     // second block, initialize spreadsheet
-    const xlsxFormatter = new XlsxFormatter()
+    const xlsxFormatter = new XlsxFormatter(config);
     try {
         xlsxFormatter.initSpreadsheet(fileBlob)
     } catch (err) {

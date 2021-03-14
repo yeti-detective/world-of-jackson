@@ -1,6 +1,12 @@
 const XLSX = require("xlsx");
 import { IBuildingFields } from "../types/db/contentful";
 
+export type tableConfig = {
+  name: string;
+  lat: string;
+  long: string;
+}
+
 type ImportXlsx = {
   read(fileBlob: Buffer): ImportSpreadSheet;
 };
@@ -23,56 +29,73 @@ type ImportCell = { v: string };
 
 type colRowSheetName = { sheetName: string; col: string; row: string };
 
+function validateTableConfig(config: tableConfig): tableConfig {
+  if (
+    config.name === undefined ||
+    config.lat === undefined ||
+    config.long === undefined
+    ) {
+      throw new Error("Invalid config. Must have properties: name, lat, long");
+    }
+    return config;
+}
+
 export class XlsxFormatter {
   xlsx: ImportXlsx;
+  config: tableConfig;
   spreadSheet: ImportSpreadSheet;
   sheets: string[];
-  propertyTable: object;
   buildings: IBuildingFields[];
+  buildingsMap: {[key: string]: IBuildingFields};
 
-  constructor() {
+  constructor(config: tableConfig) {
     this.xlsx = XLSX;
+    this.config =  validateTableConfig(config);
     // initialize properties to empty values
     this.spreadSheet = { Sheets: {} };
     this.sheets = [];
-    this.propertyTable = {};
     this.buildings = [];
+    this.buildingsMap = {};
   }
 
   initSpreadsheet(fileBlob: Buffer) {
     this.spreadSheet = this.xlsx.read(fileBlob);
     this.sheets = Object.keys(this.spreadSheet.Sheets);
-    this.findContent();
+    
+    const configs = Object.keys(this.config);
+    for (const conf of configs) {
+      this.findContent(conf);
+    }
   }
 
-  findContent() {
-    let addrColRowSheet: colRowSheetName = { col: "", row: "", sheetName: "" };
+  findContent(field: string) {
+    let nameColRowSheet: colRowSheetName = { col: "", row: "", sheetName: "" };
     let contentSheet: ImportWorkSheet;
     let startOfData = 0;
     let endOfData = 0;
-    const addressStrings: string[] = [];
+    const bldgStrings: string[] = [];
     for (const sheet of this.sheets) {
-      addrColRowSheet = this.findHeaderColRow(sheet, "Address");
+      nameColRowSheet = this.findHeaderColRow(sheet, field);
       if (
-        addrColRowSheet.col.length > 0 &&
-        addrColRowSheet.row.length > 0 &&
-        addrColRowSheet.sheetName.length > 0
+        nameColRowSheet.col.length > 0 &&
+        nameColRowSheet.row.length > 0 &&
+        nameColRowSheet.sheetName.length > 0
       ) {
         contentSheet = this.spreadSheet.Sheets[sheet];
-        startOfData = Number(addrColRowSheet.row) + 1
+        startOfData = Number(nameColRowSheet.row) + 1
         endOfData = Number(this.getRow(contentSheet["!ref"].split(":")[1]));
-        console.log(JSON.stringify(addrColRowSheet, undefined, 2));
+        console.log(JSON.stringify(nameColRowSheet, undefined, 2));
         console.log(`data begins on row: ${startOfData} and ends on row ${endOfData}`);
         for (let i = startOfData; i <= endOfData; i++) {
-          let cellName: string = `${addrColRowSheet.col}${i}`
+          let cellName: string = `${nameColRowSheet.col}${i}`
           if (contentSheet[cellName]) {
-            addressStrings.push(contentSheet[cellName].v)
+            bldgStrings.push(contentSheet[cellName].v)
           }
         }
         break;
       }
     }
-    console.log(JSON.stringify(addressStrings, undefined, 2))
+    console.log(JSON.stringify(bldgStrings, undefined, 2))
   }
 
   findHeaderColRow(sheet: string, header: string): colRowSheetName {
@@ -82,9 +105,10 @@ export class XlsxFormatter {
     const checkSheet = this.spreadSheet.Sheets[sheet];
     const cellNames: string[] = Object.keys(checkSheet);
     for (const cellName of cellNames) {
+      console.log(cellName)
       if (
         cellName !== "!ref" &&
-        checkSheet[cellName]?.v.toLowerCase() == header.toLowerCase()
+        checkSheet[cellName]?.v.toLowerCase() == header.toLowerCase() || null
       ) {
         sheetName = sheet;
         addressCol = this.getCol(cellName);
