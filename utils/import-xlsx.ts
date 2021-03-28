@@ -1,5 +1,6 @@
 const XLSX = require("xlsx");
 import { IBuildingFields } from "../types/db/contentful";
+import { tsMatch } from "./helpers";
 
 export type tableConfig = {
   name: string;
@@ -25,7 +26,7 @@ type ImportWorkSheet = ImportWorkSheetIface & {
   [key: string]: ImportCell;
 };
 
-type ImportCell = { v: string };
+type ImportCell = { w: string };
 
 type colRowSheetName = { sheetName: string; col: string; row: string };
 
@@ -62,18 +63,16 @@ export class XlsxFormatter {
     this.spreadSheet = this.xlsx.read(fileBlob);
     this.sheets = Object.keys(this.spreadSheet.Sheets);
     
-    const configs = Object.keys(this.config);
-    for (const conf of configs) {
-      this.findContent(conf);
-    }
+    this.findContent(this.config.name, "name");
+    this.findContent(this.config.lat, "lat");
+    this.findContent(this.config.long, "long");
   }
 
-  findContent(field: string) {
+  findContent(field: string, conf: "name" | "lat" | "long") {
     let nameColRowSheet: colRowSheetName = { col: "", row: "", sheetName: "" };
     let contentSheet: ImportWorkSheet;
     let startOfData = 0;
     let endOfData = 0;
-    const bldgStrings: string[] = [];
     for (const sheet of this.sheets) {
       nameColRowSheet = this.findHeaderColRow(sheet, field);
       if (
@@ -82,20 +81,41 @@ export class XlsxFormatter {
         nameColRowSheet.sheetName.length > 0
       ) {
         contentSheet = this.spreadSheet.Sheets[sheet];
-        startOfData = Number(nameColRowSheet.row) + 1
+        startOfData = Number(nameColRowSheet.row) + 1;
         endOfData = Number(this.getRow(contentSheet["!ref"].split(":")[1]));
-        console.log(JSON.stringify(nameColRowSheet, undefined, 2));
-        console.log(`data begins on row: ${startOfData} and ends on row ${endOfData}`);
         for (let i = startOfData; i <= endOfData; i++) {
           let cellName: string = `${nameColRowSheet.col}${i}`
+          let mapKey: string = `${nameColRowSheet.sheetName}_${i}`
           if (contentSheet[cellName]) {
-            bldgStrings.push(contentSheet[cellName].v)
+            let bldg: IBuildingFields = this.buildingsMap[mapKey];
+            if (!bldg) {
+              bldg = {
+                name: '',
+                address: {
+                  lat: 0,
+                  lon: 0
+                }
+              };
+            }
+            let content: string = contentSheet[cellName].w;
+            switch(conf) {
+              case "name":
+                bldg.name = content;
+                break;
+              case "lat":
+                bldg.address.lat = Number(content);
+                break;
+              case "long":
+                bldg.address.lon = Number(content);
+                break;
+              default:
+                throw new Error(`Invalid config name: ${conf}`);
+            }
+            this.buildingsMap[mapKey] = bldg;
           }
         }
-        break;
       }
     }
-    console.log(JSON.stringify(bldgStrings, undefined, 2))
   }
 
   findHeaderColRow(sheet: string, header: string): colRowSheetName {
@@ -105,10 +125,9 @@ export class XlsxFormatter {
     const checkSheet = this.spreadSheet.Sheets[sheet];
     const cellNames: string[] = Object.keys(checkSheet);
     for (const cellName of cellNames) {
-      console.log(cellName)
       if (
         cellName !== "!ref" &&
-        checkSheet[cellName]?.v.toLowerCase() == header.toLowerCase() || null
+        checkSheet[cellName]?.w.toLowerCase() == header.toLowerCase() || null
       ) {
         sheetName = sheet;
         addressCol = this.getCol(cellName);
@@ -124,24 +143,10 @@ export class XlsxFormatter {
   }
 
   getCol(cell: string): string {
-    // if there is a way to use a RegExp matcher in Typescript, please implement it here
-    return cell.split("").reduce((a, b): string => {
-      const upperCode: number = b.toUpperCase().charCodeAt(0);
-      if (upperCode >= 65 && upperCode <= 90) {
-        a += b.toUpperCase();
-      }
-      return a;
-    }, "");
+    return tsMatch(cell, /[A-Z]/g);
   }
 
   getRow(cell: string): string {
-    // see above re: String.match()
-    return cell.split("").reduce((a, b): string => {
-      const code: number = b.charCodeAt(0);
-      if (code >= 48 && code <= 57) {
-        a += b.toUpperCase();
-      }
-      return a;
-    }, "");
+    return tsMatch(cell, /[0-9]/g)
   }
 }

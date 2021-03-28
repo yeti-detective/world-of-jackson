@@ -9,7 +9,7 @@ let config: tableConfig;
 
 const defaultConfig: tableConfig = {
     name: "Building Name",
-    lat: "Latitude",
+    lat: "Latittude",
     long: "Longitude"
 }
 
