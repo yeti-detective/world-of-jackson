@@ -5,4 +5,4 @@ export function tsMatch(str: string, matcher: RegExp): string {
     } else {
         return "";
     }
-} 
+}

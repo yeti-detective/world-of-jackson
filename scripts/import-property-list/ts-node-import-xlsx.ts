@@ -15,7 +15,7 @@ const defaultConfig: tableConfig = {
 
 try {
     config = require(pathToConfig);
-} catch(err) {
+} catch (err) {
     console.warn(`Error getting table config from ${pathToConfig}: `, err);
 }
 if (!config) {
@@ -43,13 +43,20 @@ function importXlsxPropertyList(filePath: string) {
     } catch (err) {
         console.warn(err)
     }
-    
-    // second block, initialize spreadsheet
+
+    // second block, parse file data
     const xlsxFormatter = new XlsxFormatter(config);
     try {
         xlsxFormatter.initSpreadsheet(fileBlob)
     } catch (err) {
         console.warn(err)
     }
-    // third block, parse file to intermediate format
+    // third block, post to contentful
+    try {
+        console.log("Posting the buildings:");
+        console.log(JSON.stringify(xlsxFormatter.buildingsMap, undefined, 2));
+        xlsxFormatter.uploadContent();
+    } catch (err) {
+        console.log(err);
+    }
 }

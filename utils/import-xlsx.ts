@@ -1,5 +1,6 @@
 const XLSX = require("xlsx");
-import { IBuildingFields } from "../types/db/contentful";
+const contentfulEnv = require("../getContentfulEnvironment");
+import { IBuildingFields, CONTENTFUL_DEFAULT_LOCALE_CODE } from "../types/db/contentful";
 import { tsMatch } from "./helpers";
 
 export type tableConfig = {
@@ -35,10 +36,20 @@ function validateTableConfig(config: tableConfig): tableConfig {
     config.name === undefined ||
     config.lat === undefined ||
     config.long === undefined
-    ) {
-      throw new Error("Invalid config. Must have properties: name, lat, long");
+  ) {
+    throw new Error("Invalid config. Must have properties: name, lat, long");
+  }
+  return config;
+}
+
+interface IBuildingFieldsForTransmission {
+  name: { [key: string]: string };
+  address: {
+    [key: string]: {
+      lat: string;
+      lon: string;
     }
-    return config;
+  }
 }
 
 export class XlsxFormatter {
@@ -46,12 +57,12 @@ export class XlsxFormatter {
   config: tableConfig;
   spreadSheet: ImportSpreadSheet;
   sheets: string[];
-  buildings: IBuildingFields[];
-  buildingsMap: {[key: string]: IBuildingFields};
+  buildings: IBuildingFieldsForTransmission[];
+  buildingsMap: { [key: string]: IBuildingFields };
 
   constructor(config: tableConfig) {
     this.xlsx = XLSX;
-    this.config =  validateTableConfig(config);
+    this.config = validateTableConfig(config);
     // initialize properties to empty values
     this.spreadSheet = { Sheets: {} };
     this.sheets = [];
@@ -62,10 +73,28 @@ export class XlsxFormatter {
   initSpreadsheet(fileBlob: Buffer) {
     this.spreadSheet = this.xlsx.read(fileBlob);
     this.sheets = Object.keys(this.spreadSheet.Sheets);
-    
+
     this.findContent(this.config.name, "name");
     this.findContent(this.config.lat, "lat");
     this.findContent(this.config.long, "long");
+  }
+
+  uploadContent() {
+    for(const bldg of Object.values(this.buildingsMap)) {
+      contentfulEnv.createEntry('building', this.prepareBuildingForTransmission(bldg))
+    }
+  }
+
+  prepareBuildingForTransmission(bldg: IBuildingFields): IBuildingFieldsForTransmission {
+    return {
+      name: { CONTENTFUL_DEFAULT_LOCALE_CODE: bldg.name },
+      address: {
+        CONTENTFUL_DEFAULT_LOCALE_CODE: {
+          lat: String(bldg.address.lat),
+          lon: String(bldg.address.lon)
+        }
+      }
+    }
   }
 
   findContent(field: string, conf: "name" | "lat" | "long") {
@@ -98,7 +127,7 @@ export class XlsxFormatter {
               };
             }
             let content: string = contentSheet[cellName].w;
-            switch(conf) {
+            switch (conf) {
               case "name":
                 bldg.name = content;
                 break;
