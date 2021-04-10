@@ -1,5 +1,5 @@
 const XLSX = require("xlsx");
-const contentfulEnv = require("../getContentfulEnvironment");
+const getContentfulEnv = require("../getContentfulEnvironment");
 import { IBuildingFields, CONTENTFUL_DEFAULT_LOCALE_CODE } from "../types/db/contentful";
 import { tsMatch } from "./helpers";
 
@@ -43,11 +43,15 @@ function validateTableConfig(config: tableConfig): tableConfig {
 }
 
 interface IBuildingFieldsForTransmission {
-  name: { [key: string]: string };
-  address: {
-    [key: string]: {
-      lat: string;
-      lon: string;
+  fields: {
+    name: { [key: string]: string };
+    latitutde: { [key: string]: number };
+    longitude: { [key: string]: number };
+    address: {
+      [key: string]: {
+        lat: number;
+        lon: number;
+      }
     }
   }
 }
@@ -79,19 +83,30 @@ export class XlsxFormatter {
     this.findContent(this.config.long, "long");
   }
 
-  uploadContent() {
-    for(const bldg of Object.values(this.buildingsMap)) {
-      contentfulEnv.createEntry('building', this.prepareBuildingForTransmission(bldg))
+  async uploadContent() {
+    const env = await getContentfulEnv();
+    for (const bldg of Object.values(this.buildingsMap)) {
+      console.log("Object to post:");
+      console.log(JSON.stringify(this.prepareBuildingForTransmission(bldg), undefined, 2));
+      try {
+        env.createEntry('building', this.prepareBuildingForTransmission(bldg));
+      } catch (err) {
+        console.log(err);
+      }
     }
   }
 
   prepareBuildingForTransmission(bldg: IBuildingFields): IBuildingFieldsForTransmission {
+    const localeCode: CONTENTFUL_DEFAULT_LOCALE_CODE = "en-US"
+    const lat = bldg.address.lat;
+    const lon = bldg.address.lon;
     return {
-      name: { CONTENTFUL_DEFAULT_LOCALE_CODE: bldg.name },
-      address: {
-        CONTENTFUL_DEFAULT_LOCALE_CODE: {
-          lat: String(bldg.address.lat),
-          lon: String(bldg.address.lon)
+      fields: {
+        name: { [localeCode]: bldg.name },
+        latitutde: { [localeCode]: lat},
+        longitude: { [localeCode]: lon},
+        address: {
+          [localeCode]: { lat, lon }
         }
       }
     }

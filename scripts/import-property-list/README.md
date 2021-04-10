@@ -18,3 +18,5 @@ CONTENTFUL_ENVIRONMENT=<the desired environment (ex: dev or master)>
 > cd <world-of-jackson repo location>
 > yarn import-xlsx <path to import file (ex: ~/Desktop/importBuildings.xlsx)>
 ```
+Any errors that occur during the import will be logged to your terminal.
+Access [Contentful](https://app.contentful.com/) to view/publish the posted buildings.

@@ -9,7 +9,7 @@ let config: tableConfig;
 
 const defaultConfig: tableConfig = {
     name: "Building Name",
-    lat: "Latittude",
+    lat: "Latitude",
     long: "Longitude"
 }
 
@@ -53,8 +53,6 @@ function importXlsxPropertyList(filePath: string) {
     }
     // third block, post to contentful
     try {
-        console.log("Posting the buildings:");
-        console.log(JSON.stringify(xlsxFormatter.buildingsMap, undefined, 2));
         xlsxFormatter.uploadContent();
     } catch (err) {
         console.log(err);
