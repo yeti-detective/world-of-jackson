@@ -13,7 +13,8 @@ CONTENTFUL_SPACE_ID=<the World of Jackson Space ID (ex: 7zzvnrgo4q2e as of the c
 CONTENTFUL_MANAGEMENT_API_ACCESS_TOKEN=<the above-mentioned personal access token>
 CONTENTFUL_ENVIRONMENT=<the desired environment (ex: dev or master)>
 ```
-- In Terminal: ```shell
+- In Terminal: 
+```shell
 > cd <world-of-jackson repo location>
 > yarn import-xlsx <path to import file (ex: ~/Desktop/importBuildings.xlsx)>
 ```
